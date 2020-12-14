@@ -17,7 +17,7 @@ public class TileButton : MonoBehaviour
         GetComponentInChildren<Text>().text = value;
     }
     public void changeText(int value) {
-        changeText((value+1).ToString());
+        changeText(value.ToString());
     }
     public void clearText() {
         changeText("");
@@ -39,15 +39,8 @@ public class TileButton : MonoBehaviour
     public void select() {
         setColorBackground(Color.yellow);
     }
-    public void deselect() {
-        setColorBackground(Color.white);
-    }
-
-    public bool hasText() {
-        return GetComponentInChildren<Text>().text.Length != 0;
-    }
-    public int getValue() {
-        return hasText() ? (int) (GetComponentInChildren<Text>().text[0] - '0') : -1;
+    public void deselect(bool is_legal = true) {
+        setColorBackground(is_legal ? Color.white : Color.red);
     }
 
     public void Click() {
