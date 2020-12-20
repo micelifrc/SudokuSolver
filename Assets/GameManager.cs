@@ -6,26 +6,29 @@ using System.Collections.Generic;
 public class GameManager : MonoBehaviour
 {
     public Button buttonSprite;
-    public int ButtonSize = 40;  // the size of a single button
-    public int MarginSize = 5;
+    public int Button_Length = 40;  // the Length of a single button
+    public int Margin_Length = 5;
     public int ShiftLeft = 100;
-    public const int RootSize = 3;
-    private const int Size = RootSize * RootSize;  // the grid will by Size x Size
-    private const int SizeSquared = Size * Size;
-    private const int InvaliIdx = -1;
-    private int selectedTile = InvaliIdx;
+    public const int RootLength = 3;
+    private const int Length = RootLength * RootLength;  // the grid will by Length x Length
+    private const int Area = Length * Length;
+    private const int Volume = Area * Length;
+    private const int InvalidIdx = -1;
 
+    private int selectedTile = InvalidIdx;
     private Button[] selectionButtons;
     private Button[] buttons;
+    public Button solveButton, resetButton;
     private int[] inputValues;
     private List<int>[] inputConflicts;
 
     private SudokuSolver solver;
     private bool is_solving;
 
-    private int getX(int idx) { return idx % Size; }
-    private int getY(int idx) { return idx / Size; }
-    private int getGameCoord(int cd) { return (int) (ButtonSize * ( cd - Size / 2) + MarginSize * (cd / RootSize - RootSize / 2)); }
+    static int getX(int idx) { return idx % Length; }
+    static int getY(int idx) { return (idx / Length) % Length; }
+    static int getCol(int idx) { return idx / Area; }
+    private int getGameCoord(int cd) { return (int) (Button_Length * ( cd - Length / 2) + Margin_Length * (cd / RootLength - RootLength / 2)); }
     private Vector3 getVector3Position(int idx) { return new Vector3(getGameCoord(getX(idx)) - ShiftLeft, getGameCoord(getY(idx)), 0); }
 
     private void changeButtonText(int button_idx, string value) {
@@ -49,20 +52,20 @@ public class GameManager : MonoBehaviour
     }
     private void deselectButton(int button_idx) {
         if (selectedTile == button_idx) {
-            selectedTile = InvaliIdx;
+            selectedTile = InvalidIdx;
         }
         buttons[button_idx].GetComponent<TileButton>().deselect(inputConflicts[button_idx].Count == 0);
     }
 
     // Start is called before the first frame update
-    private void Start() {        
+    private void Start() {
         is_solving = false;
-        selectionButtons = new Button[Size + 1];
-        for (int value = 0; value <= Size; ++value) {
+        selectionButtons = new Button[Length + 1];
+        for (int value = 0; value <= Length; ++value) {
             bool hasValue = value > 0;
-            int pos_value = hasValue ? value - 1 : Size;
-            int xPos = getGameCoord(Size + pos_value % RootSize) - ShiftLeft / 2 + (hasValue ? ButtonSize / 2 : ButtonSize * RootSize / 2);
-            int yPos = getGameCoord(Size - 1 - pos_value / RootSize);
+            int pos_value = hasValue ? value - 1 : Length;
+            int xPos = getGameCoord(Length + pos_value % RootLength) - ShiftLeft / 2 + (hasValue ? Button_Length / 2 : Button_Length * RootLength / 2);
+            int yPos = getGameCoord(Length - 1 - pos_value / RootLength);
             selectionButtons[value] = Instantiate(buttonSprite, new Vector3(xPos, yPos, 0), Quaternion.identity) as Button;
             selectionButtons[value].transform.SetParent(GameObject.FindGameObjectWithTag("Canvas").transform, false);  // otherwise the object is invisible
             selectionButtons[value].GetComponent<TileButton>().setInputColor();
@@ -72,11 +75,11 @@ public class GameManager : MonoBehaviour
             selectionButtons[value].GetComponent<TileButton>().is_selection_button = true;
         }
 
-        inputValues = new int[SizeSquared];
-        inputConflicts = new List<int>[SizeSquared];
-        buttons = new Button[SizeSquared];
-        for (int button_idx = 0; button_idx < SizeSquared; ++button_idx) {
-            inputValues[button_idx] = InvaliIdx;
+        inputValues = new int[Area];
+        inputConflicts = new List<int>[Area];
+        buttons = new Button[Area];
+        for (int button_idx = 0; button_idx < Area; ++button_idx) {
+            inputValues[button_idx] = InvalidIdx;
             inputConflicts[button_idx] = new List<int>();
             buttons[button_idx] = Instantiate(buttonSprite, getVector3Position(button_idx), Quaternion.identity) as Button;
             buttons[button_idx].transform.SetParent(GameObject.FindGameObjectWithTag("Canvas").transform, false);  // otherwise the object is invisible
@@ -84,6 +87,9 @@ public class GameManager : MonoBehaviour
             deselectButton(button_idx);
             buttons[button_idx].GetComponent<TileButton>().idx = button_idx;
         }
+        solveButton.GetComponent<Button>().interactable = true;
+        resetButton.GetComponent<Button>().interactable = false;
+        changeSelectedButton(startingSelectedTile());
     }
 
     // Update is called once per frame
@@ -92,30 +98,32 @@ public class GameManager : MonoBehaviour
     }
 
     private void detectKeyProssed() {
-        if (selectedTile < 0 || selectedTile >= SizeSquared) return;
+        if (selectedTile < 0 || selectedTile >= Area) return;
         if (Input.GetKeyDown(KeyCode.Escape)) {
             deselectButton(selectedTile);
         }
+        int shiftMultiplier = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift) ? RootLength : 1;
         if (Input.GetKeyDown(KeyCode.UpArrow) || Input.GetKeyDown(KeyCode.W)) {
-            int newSelectedTile = (selectedTile + Size) % SizeSquared;
+            int newSelectedTile = (selectedTile + shiftMultiplier * Length) % Area;
             deselectButton(selectedTile);
             selectButton(newSelectedTile);
         }
         if (Input.GetKeyDown(KeyCode.DownArrow) || Input.GetKeyDown(KeyCode.S)) {
-            int newSelectedTile = (SizeSquared + selectedTile - Size) % SizeSquared;
+            int newSelectedTile = (Area + selectedTile - shiftMultiplier * Length) % Area;
             deselectButton(selectedTile);
             selectButton(newSelectedTile);
         }
         if (Input.GetKeyDown(KeyCode.RightArrow) || Input.GetKeyDown(KeyCode.D)) {
-            int newSelectedTile = selectedTile - selectedTile % Size + (selectedTile + 1) % Size;
+            int newSelectedTile = selectedTile - selectedTile % Length + (selectedTile + shiftMultiplier) % Length;
             deselectButton(selectedTile);
             selectButton(newSelectedTile);
         }
         if (Input.GetKeyDown(KeyCode.LeftArrow) || Input.GetKeyDown(KeyCode.A)) {
-            int newSelectedTile = selectedTile - selectedTile % Size + (Size + selectedTile - 1) % Size;
+            int newSelectedTile = selectedTile - selectedTile % Length + (Length + selectedTile - shiftMultiplier) % Length;
             deselectButton(selectedTile);
             selectButton(newSelectedTile);
         }
+        // input can be deleted using the backspace or the delete key
         if (Input.GetKeyDown(KeyCode.Backspace) || Input.GetKeyDown(KeyCode.Delete)) writeInput(0);
         if (Input.GetKeyDown(KeyCode.Keypad1) || Input.GetKeyDown(KeyCode.Alpha1)) writeInput(1);
         if (Input.GetKeyDown(KeyCode.Keypad2) || Input.GetKeyDown(KeyCode.Alpha2)) writeInput(2);
@@ -126,39 +134,56 @@ public class GameManager : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Keypad7) || Input.GetKeyDown(KeyCode.Alpha7)) writeInput(7);
         if (Input.GetKeyDown(KeyCode.Keypad8) || Input.GetKeyDown(KeyCode.Alpha8)) writeInput(8);
         if (Input.GetKeyDown(KeyCode.Keypad9) || Input.GetKeyDown(KeyCode.Alpha9)) writeInput(9);
+        // the return key is equivalent to the Start button
+        if (Input.GetKeyDown(KeyCode.Return)) Solve();
     }
 
-    // solve the current Sudoku
+    // solve the current Sudoku. Invoked by the start button, or (equivalently) the return key
     public void Solve() {
         if (hasConflicts() || is_solving) return;
         is_solving = true;
-        for (int button_idx = 0; button_idx != SizeSquared; ++button_idx) {
+        for (int button_idx = 0; button_idx != Area; ++button_idx) {
             deselectButton(button_idx);
-            if (inputValues[button_idx] == InvaliIdx) {
+            if (inputValues[button_idx] == InvalidIdx) {
                 setAlgoColorButton(button_idx);
             }
         }
-        Debug.Log("You pressed the SOLVE button");  // TODO replace with real implementatiton
-        solver = new SudokuSolver(inputValues);
+        solver = new SudokuSolver(inputValues, buttons);
         solver.Solve();
+        solveButton.GetComponent<Button>().interactable = false;
+        resetButton.GetComponent<Button>().interactable = true;
         is_solving = false;
     }
+
+    // Reset everything
+    public void Reset() {
+        is_solving = false;
+        for (selectedTile = 0; selectedTile < buttons.Length; selectedTile++) {
+            setInputColorButton(selectedTile);
+            writeInput(0);
+        }
+        changeSelectedButton(startingSelectedTile());
+        solveButton.GetComponent<Button>().interactable = true;
+        resetButton.GetComponent<Button>().interactable = false;
+    }
+
+    private int startingSelectedTile() { return Area - Length; }
 
     public void changeSelectedButton(int idx) {
         if (is_solving) return;
         bool just_deselect = (idx == selectedTile);
-        if (selectedTile != InvaliIdx) {
+        if (selectedTile >= 0 && selectedTile < Area) {
             deselectButton(selectedTile);
         }
-        if (!just_deselect && idx >= 0 && idx < SizeSquared) {
+        if (!just_deselect && idx >= 0 && idx < Area) {
             selectButton(idx);
         } else {
-            selectedTile = InvaliIdx;
+            selectedTile = InvalidIdx;
         }
     }
 
     public void writeInput(int value) {
-        if (selectedTile == InvaliIdx || is_solving) return;
+        if (selectedTile == InvalidIdx || is_solving) return;
         removeInputConflicts(selectedTile);
         if (value > 0 && inputValues[selectedTile] != value - 1) {
             changeButtonText(selectedTile, value);
@@ -166,12 +191,12 @@ public class GameManager : MonoBehaviour
             addInputConflicts(selectedTile);
         } else if (value == 0) {
             clearButtonText(selectedTile);
-            inputValues[selectedTile] = InvaliIdx;
+            inputValues[selectedTile] = InvalidIdx;
         }
     }
 
     private void addInputConflicts(int pivot) {
-        if (pivot < 0 || pivot >= SizeSquared) return;
+        if (pivot < 0 || pivot >= Area) return;
         int[] neighbours = getNeighbourIds(pivot);
         foreach (int neighbour_idx in neighbours) {
             if (inputValues[neighbour_idx] == inputValues[pivot]) {
@@ -185,7 +210,7 @@ public class GameManager : MonoBehaviour
     }
 
     private void removeInputConflicts(int pivot) {
-        if (pivot < 0 || pivot >= SizeSquared) return;
+        if (pivot < 0 || pivot >= Area) return;
         int[] neighbours = getNeighbourIds(pivot);
         foreach (int neighbour_idx in neighbours) {
             if (inputValues[neighbour_idx] == inputValues[pivot]) {
@@ -200,25 +225,25 @@ public class GameManager : MonoBehaviour
 
     // get the indices of all the neighbours of pivot
     private int[] getNeighbourIds(int pivot) {
-        if (pivot < 0 || pivot >= SizeSquared) return new int[0];
-        int[] neighbours = new int[3 * Size - 2 *RootSize - 1];
+        if (pivot < 0 || pivot >= Area) return new int[0];
+        int[] neighbours = new int[3 * Length - 2 *RootLength - 1];
         int neighbour_idx = 0;
-        int pivotX = pivot % Size, pivotY = pivot / Size;
-        for (int x = 0; x < Size; ++x) {
+        int pivotX = pivot % Length, pivotY = pivot / Length;
+        for (int x = 0; x < Length; ++x) {
             if (x == pivotX) continue;
-            neighbours[neighbour_idx] = Size * pivotY + x;
-            neighbour_idx++;
+            neighbours[neighbour_idx] = Length * pivotY + x;
+            ++neighbour_idx;
         }
-        for (int y = 0; y < Size; ++y) {
+        for (int y = 0; y < Length; ++y) {
             if (y == pivotY) continue;
-            neighbours[neighbour_idx] = Size * y + pivotX;
-            neighbour_idx++;
+            neighbours[neighbour_idx] = Length * y + pivotX;
+            ++neighbour_idx;
         }
-        for (int x = RootSize * (pivotX / RootSize); x < RootSize * (pivotX / RootSize + 1); ++x) {
+        for (int x = RootLength * (pivotX / RootLength); x < RootLength * (pivotX / RootLength + 1); ++x) {
             if (x == pivotX) continue;
-            for (int y = RootSize * (pivotY / RootSize); y < RootSize * (pivotY / RootSize + 1); ++y) {
+            for (int y = RootLength * (pivotY / RootLength); y < RootLength * (pivotY / RootLength + 1); ++y) {
                 if (y == pivotY) continue;
-                neighbours[neighbour_idx] = Size * y + x;
+                neighbours[neighbour_idx] = Length * y + x;
                 ++neighbour_idx;
             }
         }
@@ -231,5 +256,35 @@ public class GameManager : MonoBehaviour
             if (inputConflicts[idx].Count != 0) return true;
         }
         return false;
+    }
+
+    private void printSolution(ref int[] solution) {
+        if (solution.Length != Area) {
+            Debug.Log("Wrong number of values in output solution. Got " + solution.Length + " values");
+            return;
+        }
+        for (int idx = 0; idx < solution.Length; ++idx) {
+            if (solution[idx] < 0 || solution[idx] >= Length) {
+                Debug.Log("Output solution for index " + idx + " is " + solution[idx] + ", which is out of range");
+                return;
+            }
+            if (inputValues[idx] != InvalidIdx && inputValues[idx] != solution[idx]) {
+                Debug.Log("Output solution does't match input in position (" + idx%Length+1 + "," + idx/Length+1 + "). Output value is: " + solution[idx]+1);
+                return;
+            }
+            changeButtonText(idx, solution[idx]);
+            inputValues[idx] = solution[idx] - 1;
+        }
+    }
+
+    // close the application
+    public void Quit() { 
+        #if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+        #elif UNITY_WEBPLAYER
+        Application.OpenURL(webplayerQuitURL);
+        #else
+        Application.Quit();
+        #endif
     }
 }
