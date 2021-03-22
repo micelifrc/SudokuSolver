@@ -155,6 +155,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileButtonPrefab: {fileID: 7540132181172639635, guid: 76c5f2a19fa335c4db5bc9f1feeb15f5,
     type: 3}
+  inputNumberButtonPrefab: {fileID: 8924289494619733527, guid: 550a8e972c85fdf49b6dd768b6999568,
+    type: 3}
 --- !u!4 &64623386
 Transform:
   m_ObjectHideFlags: 0

@@ -17,6 +17,8 @@ public class GameManager : MonoBehaviour {
 
     public Button tileButtonPrefab;  // a prefab for the tiles (where to write the numbers of the puzzle)
     private Button[] tile_buttons;  // the Buttons representing the tiles, where to write the numbers
+    public Button inputNumberButtonPrefab;  // a prefab for the input digits (where to write the numbers of the puzzle)
+    private Button[] input_number_buttons;  // the Buttons to insert input
 
     // This is to make GameManager a singleton
     private void MakeSingleton() {
@@ -32,6 +34,7 @@ public class GameManager : MonoBehaviour {
         MakeSingleton();
         UpdateGraphicSizes();
         CreateTileButtons();
+        CreateInputNumberButtons();
     }
 
     // Update is called once per frame
@@ -60,6 +63,23 @@ public class GameManager : MonoBehaviour {
             tile_buttons[tile_idx] = Instantiate(tileButtonPrefab, new Vector3(0f, 0f, 0f), Quaternion.identity) as Button;
             tile_buttons[tile_idx].transform.SetParent(GameObject.FindGameObjectWithTag("Canvas").transform, false);
             tile_buttons[tile_idx].GetComponent<TileButton>().Initialize(UTL.getx(tile_idx), UTL.gety(tile_idx));
+        }
+    }
+
+    // create and initialize input_number_buttons
+    private void CreateInputNumberButtons()
+    {
+        input_number_buttons = new Button[_GridLength + 1];
+        int x = 0, y = -1;
+        for (int number = 0; number <= _GridLength; number++)
+        {
+            input_number_buttons[number] = Instantiate(inputNumberButtonPrefab, new Vector3(0f, 0f, 0f), Quaternion.identity) as Button;
+            input_number_buttons[number].transform.SetParent(GameObject.FindGameObjectWithTag("Canvas").transform, false);
+            if (number > 0) {
+                x = (number - 1) % _GridRootLength;
+                y = (number - 1) / _GridRootLength;
+            }
+            input_number_buttons[number].GetComponent<InputNumberButton>().Initialize(x, y, number);
         }
     }
 
