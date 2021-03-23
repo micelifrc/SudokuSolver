@@ -19,6 +19,9 @@ public class GameManager : MonoBehaviour {
     private Button[] tile_buttons;  // the Buttons representing the tiles, where to write the numbers
     public Button inputNumberButtonPrefab;  // a prefab for the input digits (where to write the numbers of the puzzle)
     private Button[] input_number_buttons;  // the Buttons to insert input
+    public Button clearButtonPrefab;  // the prefab for the Clear button
+    public Button solveButtonPrefab;  // the prefab for the Solve button
+    private Button clear_button, solve_button;  // the actual buttons
 
     // This is to make GameManager a singleton
     private void MakeSingleton() {
@@ -35,6 +38,7 @@ public class GameManager : MonoBehaviour {
         UpdateGraphicSizes();
         CreateTileButtons();
         CreateInputNumberButtons();
+        CreateColoredButton();
     }
 
     // Update is called once per frame
@@ -81,6 +85,17 @@ public class GameManager : MonoBehaviour {
             }
             input_number_buttons[number].GetComponent<InputNumberButton>().Initialize(x, y, number);
         }
+    }
+
+    // create the clear and solve buttons
+    private void CreateColoredButton()
+    {
+        clear_button = Instantiate(clearButtonPrefab, new Vector3(0f, 0f, 0f), Quaternion.identity) as Button;
+        clear_button.transform.SetParent(GameObject.FindGameObjectWithTag("Canvas").transform, false);
+        clear_button.GetComponent<ColoredButton>().Initialize(_GridRootLength, (_GridRootLength * 2) / 3, 2 + _GridRootLength * 2, 40);
+        solve_button = Instantiate(solveButtonPrefab, new Vector3(0f, 0f, 0f), Quaternion.identity) as Button;
+        solve_button.transform.SetParent(GameObject.FindGameObjectWithTag("Canvas").transform, false);
+        solve_button.GetComponent<ColoredButton>().Initialize(_GridRootLength, (_GridRootLength * 2) / 3, 1 + (_GridRootLength * 2) / 3, 40);
     }
 
     // a list of getters
