@@ -16,12 +16,16 @@ public class GameManager : MonoBehaviour {
     private const int _NumHorizontalSpaces = (_GridLength + _GridRootLength + 2) * _BorderSizeUnitButtonSizeRatio + _GridRootLength - 1;  // the horizontal space is devided into _NumHorizontalSpaces intervals, of length _BorderSize each
 
     public Button tileButtonPrefab;  // a prefab for the tiles (where to write the numbers of the puzzle)
-    private Button[] tile_buttons;  // the Buttons representing the tiles, where to write the numbers
+    private Button[] _tile_buttons;  // the Buttons representing the tiles, where to write the numbers
     public Button inputNumberButtonPrefab;  // a prefab for the input digits (where to write the numbers of the puzzle)
-    private Button[] input_number_buttons;  // the Buttons to insert input
+    private Button[] _input_number_buttons;  // the Buttons to insert input
     public Button clearButtonPrefab;  // the prefab for the Clear button
     public Button solveButtonPrefab;  // the prefab for the Solve button
-    private Button clear_button, solve_button;  // the actual buttons
+    private Button _clear_button, _solve_button;  // the actual buttons
+
+    private int[] _input_numbers;  // record the input values (all with a -1)
+    public GameObject ReaderPrefab;  // the prefab for the Reader
+    private GameObject _input_reader;  // the actual reader
 
     // This is to make GameManager a singleton
     private void MakeSingleton() {
@@ -39,6 +43,8 @@ public class GameManager : MonoBehaviour {
         CreateTileButtons();
         CreateInputNumberButtons();
         CreateColoredButton();
+        InitializeInputNumbers();
+        _input_reader = Instantiate(ReaderPrefab, new Vector3(0f, 0f, 0f), Quaternion.identity);
     }
 
     // Update is called once per frame
@@ -60,42 +66,54 @@ public class GameManager : MonoBehaviour {
         _UnitButtonSize = UTL.Math.Min((Screen.height * _BorderSizeUnitButtonSizeRatio) / _NumVerticalSpaces, (Screen.width *_BorderSizeUnitButtonSizeRatio) / _NumHorizontalSpaces);
     }
 
-    // create and initialize tile_buttons
+    // create and initialize _tile_buttons
     private void CreateTileButtons() {
-        tile_buttons = new Button[_GridArea];
+        _tile_buttons = new Button[_GridArea];
         for (int tile_idx = 0; tile_idx < _GridArea; tile_idx++) {
-            tile_buttons[tile_idx] = Instantiate(tileButtonPrefab, new Vector3(0f, 0f, 0f), Quaternion.identity) as Button;
-            tile_buttons[tile_idx].transform.SetParent(GameObject.FindGameObjectWithTag("Canvas").transform, false);
-            tile_buttons[tile_idx].GetComponent<TileButton>().Initialize(UTL.getx(tile_idx), UTL.gety(tile_idx));
+            _tile_buttons[tile_idx] = Instantiate(tileButtonPrefab, new Vector3(0f, 0f, 0f), Quaternion.identity) as Button;
+            _tile_buttons[tile_idx].transform.SetParent(GameObject.FindGameObjectWithTag("Canvas").transform, false);
+            _tile_buttons[tile_idx].GetComponent<TileButton>().Initialize(UTL.getx(tile_idx), UTL.gety(tile_idx));
         }
     }
 
-    // create and initialize input_number_buttons
+    // create and initialize _input_number_buttons
     private void CreateInputNumberButtons()
     {
-        input_number_buttons = new Button[_GridLength + 1];
+        _input_number_buttons = new Button[_GridLength + 1];
         int x = 0, y = -1;
         for (int number = 0; number <= _GridLength; number++)
         {
-            input_number_buttons[number] = Instantiate(inputNumberButtonPrefab, new Vector3(0f, 0f, 0f), Quaternion.identity) as Button;
-            input_number_buttons[number].transform.SetParent(GameObject.FindGameObjectWithTag("Canvas").transform, false);
+            _input_number_buttons[number] = Instantiate(inputNumberButtonPrefab, new Vector3(0f, 0f, 0f), Quaternion.identity) as Button;
+            _input_number_buttons[number].transform.SetParent(GameObject.FindGameObjectWithTag("Canvas").transform, false);
             if (number > 0) {
                 x = (number - 1) % _GridRootLength;
                 y = (number - 1) / _GridRootLength;
             }
-            input_number_buttons[number].GetComponent<InputNumberButton>().Initialize(x, y, number);
+            _input_number_buttons[number].GetComponent<InputNumberButton>().Initialize(x, y, number);
         }
+    }
+
+    // initialize the _input_numbers array
+    private void InitializeInputNumbers() {
+        _input_numbers = new int[_GridArea];
+        for (int idx = 0; idx < _GridArea; ++idx) _input_numbers[idx] = UTL.InvalidInt;
     }
 
     // create the clear and solve buttons
     private void CreateColoredButton()
     {
-        clear_button = Instantiate(clearButtonPrefab, new Vector3(0f, 0f, 0f), Quaternion.identity) as Button;
-        clear_button.transform.SetParent(GameObject.FindGameObjectWithTag("Canvas").transform, false);
-        clear_button.GetComponent<ColoredButton>().Initialize(_GridRootLength, (_GridRootLength * 2) / 3, 2 + _GridRootLength * 2, 40);
-        solve_button = Instantiate(solveButtonPrefab, new Vector3(0f, 0f, 0f), Quaternion.identity) as Button;
-        solve_button.transform.SetParent(GameObject.FindGameObjectWithTag("Canvas").transform, false);
-        solve_button.GetComponent<ColoredButton>().Initialize(_GridRootLength, (_GridRootLength * 2) / 3, 1 + (_GridRootLength * 2) / 3, 40);
+        _clear_button = Instantiate(clearButtonPrefab, new Vector3(0f, 0f, 0f), Quaternion.identity) as Button;
+        _clear_button.transform.SetParent(GameObject.FindGameObjectWithTag("Canvas").transform, false);
+        _clear_button.GetComponent<ColoredButton>().Initialize(_GridRootLength, (_GridRootLength * 2) / 3, 2 + _GridRootLength * 2, 40);
+        _solve_button = Instantiate(solveButtonPrefab, new Vector3(0f, 0f, 0f), Quaternion.identity) as Button;
+        _solve_button.transform.SetParent(GameObject.FindGameObjectWithTag("Canvas").transform, false);
+        _solve_button.GetComponent<ColoredButton>().Initialize(_GridRootLength, (_GridRootLength * 2) / 3, 1 + (_GridRootLength * 2) / 3, 40);
+    }
+
+    // the actual function to solve the Sudoku. Returns false if the puzzle cannot be solved
+    public bool Solve() {
+        // TODO add actual implementation
+        return true;
     }
 
     // a list of getters
@@ -105,4 +123,7 @@ public class GameManager : MonoBehaviour {
     public int BorderSize() { return _BorderSize; }
     public int ReverseBorderFraction() { return _BorderSizeUnitButtonSizeRatio; }
     public int UnitButtonSize() { return _UnitButtonSize; }
+    public Button[] GetTileButtons() { return _tile_buttons; }
+    public int[] GetInputNumbers() { return _input_numbers; }
+    public InputReader GetInputReader() { return _input_reader.GetComponent<InputReader>(); }
 }

@@ -3,21 +3,21 @@ using UnityEngine;
 using UnityEngine.UI;
 
 public class TileButton : ButtonIF {
-    private UTL.Coord2 _Coord;  // the "grid position" of the tile, aka a pair of coordinates in [0,_GridLength) * [0,_GridLength)
+    private UTL.Coord2 _coord;  // the "grid position" of the tile, aka a pair of coordinates in [0,_GridLength) * [0,_GridLength)
     private int _written_number;
 
     // Called once, when the TileButton is created
     public override void Awake() {
         base.Awake();
-        _Coord = new UTL.Coord2();
+        _coord = new UTL.Coord2();
         _written_number = 0;
     }
 
     // the actual initialization of the TileButton (serves the purpose that is usully done by the constructor)
     public void Initialize(int x_, int y_)
     {
-        _Coord.x = x_;
-        _Coord.y = y_;
+        _coord.x = x_;
+        _coord.y = y_;
         AdjustSizeAndPosition();
     }
 
@@ -29,12 +29,16 @@ public class TileButton : ButtonIF {
     }
 
     // some getters
-    public UTL.Coord2 Coord() { return _Coord; }
-    public int x() { return _Coord.x; }
-    public int y() { return _Coord.y; }
+    public UTL.Coord2 Coord() { return _coord; }
+    public int x() { return _coord.x; }
+    public int y() { return _coord.y; }
 
     public void writeNumber(int n) {
         _written_number = n;
         writeButtonTextNumber(n);
+    }
+
+    public void selectButton() {
+        GameManager.Instance.GetInputReader().selectTile(_coord);
     }
 }

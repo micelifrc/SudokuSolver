@@ -42,6 +42,11 @@ public class InputNumberButton : ButtonIF
         }
     }
 
+    // give a signal to the InputReader
+    public void PressButton() {
+        GameManager.Instance.GetInputReader().writeInput(_written_number);
+    }
+
     // some getters
     public UTL.Coord2 Coord() { return _Coord; }
     public int x() { return _Coord.x; }
