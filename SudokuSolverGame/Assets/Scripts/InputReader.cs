@@ -37,6 +37,7 @@ public class InputReader : MonoBehaviour {
         detectKeyProssed();
     }
 
+    // update _selectedTile to new_pos
     public bool selectTile(UTL.Coord2 new_pos) {
         if (!new_pos.is_in_grid()) return false;
         _tile_buttons[_selectedTile.getIdx()].GetComponent<Image>().color = Color.white;
@@ -45,27 +46,33 @@ public class InputReader : MonoBehaviour {
         return true;
     }
 
+    // move _selectedTile by a movement vector
     private bool moveSelectedTile(UTL.Coord2 movement) {
         return selectTile(_selectedTile + movement);
     }
 
+    // move _selectedTile by a (x,y) vector
     private bool moveSelectedTile(int x, int y) {
         return moveSelectedTile(new UTL.Coord2(x, y));
     }
 
+    // reset _selectedTile
     private void deselectButton() {
         _tile_buttons[_selectedTile.getIdx()].GetComponent<Image>().color = Color.white;
         _selectedTile = null;
     }
 
+    // write the value n in the tile with position coord
     private void writeInput(int n, UTL.Coord2 coord) {
         if (!is_valid_tile(coord)) return;
         _tile_buttons[coord.getIdx()].GetComponent<TileButton>().writeNumber(n);
         _input_numbers[coord.getIdx()] = n - 1;
     }
 
+    // write the value n in the selected tile
     public void writeInput(int n) { writeInput(n, _selectedTile); }
 
+    // actions if a key is pressed
     private void detectKeyProssed() {
         if (!is_valid_selectedTile() || !_can_input_data) return;
         if (Input.GetKeyDown(KeyCode.Escape)) deselectButton();
@@ -89,21 +96,40 @@ public class InputReader : MonoBehaviour {
         if (Input.GetKeyDown(KeyCode.Return)) Solve();
     }
 
-    private bool is_valid_tile(UTL.Coord2 coord) { return coord != null && coord.is_in_grid(); }
-    private bool is_valid_selectedTile() { return is_valid_tile(_selectedTile); }
+    private bool is_valid_tile(UTL.Coord2 coord) { return coord != null && coord.is_in_grid(); }  // true if coord belongs to the 2D grid
+    private bool is_valid_selectedTile() { return is_valid_tile(_selectedTile); }  // true if _selectedTile belongs to the 2D grid
 
+    // Solve the instance
     public void Solve() {
         _can_input_data = false;
-        GameManager.Instance.Solve();
+        if (!GameManager.Instance.Solve()) deselectButton();
         _can_input_data = true;
     }
 
+    // Clear the input, by deleting all the written numbers
     public void Clear() {
         UTL.Coord2 coord = new UTL.Coord2(0, 0);
         for (coord.y = 0; coord.y < _gridLength; ++coord.y) {
             for (coord.x = 0; coord.x < _gridLength; ++coord.x) {
                 writeInput(0, coord);
+                getTileButton(coord).chageTextColor(Color.black);
             }
         }
     }
-};
+
+    // change the color of tile-texts from black to blue for all the tiles that are not written from input
+    public void changeTextColorForAlgo()
+    {
+        UTL.Coord2 coord = new UTL.Coord2(0, 0);
+        for (coord.y = 0; coord.y < _gridLength; ++coord.y) {
+            for (coord.x = 0; coord.x < _gridLength; ++coord.x) {
+                if(getTileButton(coord).isZero()) getTileButton(coord).chageTextColor(Color.blue);
+            }
+        }
+    }
+
+    // get the TileButton in the required coord
+    private TileButton getTileButton(UTL.Coord2 coord) {
+        return _tile_buttons[coord.getIdx()].GetComponent<TileButton>();
+    }
+}

@@ -50,4 +50,9 @@ public class ButtonIF : MonoBehaviour {
         if (number > 0) changeButtonText(number);
         else clearText();
     }
+
+    // change the color of the text
+    public void chageTextColor(Color color) {
+        GetComponentInChildren<Text>().color = color;
+    }
 }

@@ -23,6 +23,7 @@ public class GameManager : MonoBehaviour {
     public Button solveButtonPrefab;  // the prefab for the Solve button
     private Button _clear_button, _solve_button;  // the actual buttons
 
+    private Solver _solver;  // the algorithm solving the Sudoku puzzle
     private int[] _input_numbers;  // record the input values (all with a -1)
     public GameObject ReaderPrefab;  // the prefab for the Reader
     private GameObject _input_reader;  // the actual reader
@@ -44,6 +45,7 @@ public class GameManager : MonoBehaviour {
         CreateInputNumberButtons();
         CreateColoredButton();
         InitializeInputNumbers();
+        InitializeSolver();
         _input_reader = Instantiate(ReaderPrefab, new Vector3(0f, 0f, 0f), Quaternion.identity);
     }
 
@@ -110,10 +112,18 @@ public class GameManager : MonoBehaviour {
         _solve_button.GetComponent<ColoredButton>().Initialize(_GridRootLength, (_GridRootLength * 2) / 3, 1 + (_GridRootLength * 2) / 3, 40);
     }
 
+    // initialize the Solver
+    private void InitializeSolver() {
+        _solver = new Solver();
+        _solver.setMeasures(_GridRootLength);
+        _solver.initializeGraph();
+    }
+
     // the actual function to solve the Sudoku. Returns false if the puzzle cannot be solved
     public bool Solve() {
-        // TODO add actual implementation
-        return true;
+        _solver.ReadInputValues(_input_numbers);
+        GetInputReader().changeTextColorForAlgo();
+        return _solver.Solve();
     }
 
     // a list of getters

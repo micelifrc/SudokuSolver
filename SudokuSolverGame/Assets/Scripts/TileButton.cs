@@ -38,7 +38,10 @@ public class TileButton : ButtonIF {
         writeButtonTextNumber(n);
     }
 
+    // set this button as the selected one in the InputReader
     public void selectButton() {
         GameManager.Instance.GetInputReader().selectTile(_coord);
     }
+
+    public bool isZero() { return _written_number == 0; }
 }
