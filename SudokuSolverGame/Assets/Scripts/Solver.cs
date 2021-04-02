@@ -24,7 +24,7 @@ public class Solver {
         _nodes = new Node[Volume];
         _clusters = new Cluster[Area * 4];
         for (int node_idx = 0; node_idx < Volume; ++node_idx) {
-            _nodes[node_idx] = new Node(UTL.getx(node_idx), UTL.gety(node_idx), UTL.getz(node_idx));
+            _nodes[node_idx] = new Node(UTL.getx(node_idx), UTL.gety(node_idx), UTL.getz(node_idx), GameManager.Instance.GetTileButtons()[node_idx % Area].GetComponent<TileButton>());
         }
         for (int cl_idx = 0; cl_idx < Area * 4; ++cl_idx) {
             _clusters[cl_idx] = new Cluster();
@@ -42,7 +42,7 @@ public class Solver {
         _nodes_to_propagate = new List<int>();
         for (int tile_idx = 0; tile_idx < Area; ++tile_idx) {
             if (input_values[tile_idx] == InvalidInt) continue;
-            setNodeBool(tile_idx + Area * input_values[tile_idx], true, 0);
+            setNodeBool(tile_idx + Area * input_values[tile_idx], true);
         }
     }
 
@@ -64,9 +64,46 @@ public class Solver {
 
     // propagate the last node in _nodes_to_propagate. This means applying all the constraints in its clusters. Returns false if we get a conflict from this propagation
     private bool propagate() {
-        // TODO implement the propagate function
+        int node_idx_to_propagate = UTL.extractBack(ref _nodes_to_propagate);
+        bool is_legal_propagation = propagate_node(ref _nodes[node_idx_to_propagate]);
         ++_num_fixed_nodes_propagated;
+        return is_legal_propagation;
+    }
+
+    // propagate a node that is set as true. Return false if this leads to conflicts
+    private bool propagate_node(ref Node node_to_propagate) {
+        if (node_to_propagate.is_true) {
+            foreach (int neighbour_idx in node_to_propagate.neighbour_ids) {
+                if (!give_value_to_node(neighbour_idx, false)) return false;
+            }
+        }
+        foreach (int cluster_idx in node_to_propagate.cluster_ids) {
+            if (!give_node_value_to_cluster(ref _clusters[cluster_idx], node_to_propagate.is_true)) return false;
+        }
         return true;
+    }
+
+    // set a value to a node, and set it to the propagation list. Returns false if this leads to a conflict
+    private bool give_value_to_node(int node_idx, bool value) {
+        if (_nodes[node_idx].is_fixed) return _nodes[node_idx].is_true == value;
+        _nodes[node_idx].setBool(value, NumGuesses());
+        _nodes_to_propagate.Add(node_idx);
+        return true;
+    }
+
+    // set a value to a node for a cluster. Returns false if there is a conflict. If the cluster forces a node to get a true value, this method will set such a value
+    private bool give_node_value_to_cluster(ref Cluster cluster, bool node_is_true) {
+        if (!cluster.SetValuetoNode(node_is_true)) return false;
+        if (cluster.has_true_point || cluster.num_open > 1) return true;
+        foreach (int node_candidate in cluster.nodes_ids) {
+            if (!_nodes[node_candidate].is_fixed)
+            {
+                give_value_to_node(node_candidate, true);
+                return true;
+            }
+            else if (_nodes[node_candidate].is_true) return true;  // this can happen if the true node is waiting to be propagated
+        }
+        return false;  // this should never happen
     }
 
     // removes the last guess, since it proved to be wrong
@@ -83,7 +120,7 @@ public class Solver {
     private int NumGuesses() { return _guess_list.Count; }
 
     // the node with index node_idx is set to the required boolean value, and inserted in the _nodes_to_propagate list
-    private void setNodeBool(int node_idx, bool value_to_give, int current_time) {
+    private void setNodeBool(int node_idx, bool value_to_give, int current_time = 0) {
         _nodes[node_idx].setBool(value_to_give, current_time);
         _nodes_to_propagate.Add(node_idx);
     }
@@ -93,8 +130,10 @@ public class Solver {
         public int time;  // the time at which the Node became fixed. InvalidInt if it is not fixed
         public UTL.Coord3 coord;  // the coordinate of the node
         public int[] neighbour_ids, cluster_ids;  // the indices of the neighbour nodes, and of the clusters this node belongs to
+        private TileButton _tile_button;  // the button that need to be modified
 
-        public Node(int x, int y, int z) {
+        public Node(int x, int y, int z, TileButton tile_button_) {
+            _tile_button = tile_button_;
             is_fixed = false;
             is_true = false;
             time = InvalidInt;
@@ -128,13 +167,19 @@ public class Solver {
             cluster_ids[0] = UTL.coordToIdx(y, z);
             cluster_ids[1] = UTL.coordToIdx(x, z) + Area;
             cluster_ids[2] = UTL.coordToIdx(x, y) + Area * 2;
-            cluster_ids[3] = UTL.coordToIdx(x + RootLength * y, z) + Area * 3;
+            cluster_ids[3] = UTL.coordToIdx((x / RootLength) + RootLength * (y / RootLength), z) + Area * 3;
         }
 
         public void setBool(bool value, int required_time) {
+            change_button_value(value);
             is_fixed = true;
             is_true = value;
             time = required_time;
+        }
+
+        private void change_button_value(bool value) {
+            if (value) _tile_button.changeButtonText(coord.z + 1);
+            else if (is_true) _tile_button.clearText();
         }
     }
 
@@ -166,6 +211,16 @@ public class Solver {
             for (int s = 0; s < Length; ++s) {
                 nodes_ids[s] = UTL.coordToIdx(x * RootLength + s % RootLength, y * RootLength + s / RootLength, z);
             }
+        }
+        // a Node has just been propagated with the required value for is_true
+        public bool SetValuetoNode(bool node_is_true) {
+            --num_open;
+            if(node_is_true) {
+                if (has_true_point) return false;
+                has_true_point = true;
+                return true;
+            }
+            return num_open > 0 || has_true_point;
         }
     }
 }

@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 // this class contains some utility classes and functions
@@ -55,4 +56,10 @@ public class UTL {
     public static int coordToIdx(int x, int y, int z = 0) { return x + Length() * (y + Length() * z); }  // convert a set of coordinates into an index
     public static int coordToIdx(Coord2 coord) { return coordToIdx(coord.x, coord.y); }  // convert a set of coordinates into an index
     public static int coordToIdx(Coord3 coord) { return coordToIdx(coord.x, coord.y, coord.z); }  // convert a set of coordinates into an index
+
+    public static int extractBack(ref List<int> list) {
+        int last = list[list.Count - 1];
+        list.RemoveAt(list.Count - 1);
+        return last;
+    }
 }
