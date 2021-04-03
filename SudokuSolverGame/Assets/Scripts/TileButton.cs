@@ -14,16 +14,14 @@ public class TileButton : ButtonIF {
     }
 
     // the actual initialization of the TileButton (serves the purpose that is usully done by the constructor)
-    public void Initialize(int x_, int y_)
-    {
+    public void Initialize(int x_, int y_) {
         _coord.x = x_;
         _coord.y = y_;
         AdjustSizeAndPosition();
     }
 
     // adjust the position of the button
-    protected override void AdjustPosition()
-    {
+    protected override void AdjustPosition() {
         gameObject.transform.localPosition = new Vector3((x() + 1) * _lastUnitButtonSize + (x() / GameManager.Instance.GridRootLength()) * GameManager.Instance.BorderSize() - Screen.width / 2,
             (y() + 1) * _lastUnitButtonSize + (y() / GameManager.Instance.GridRootLength()) * GameManager.Instance.BorderSize() - Screen.height / 2, 0f);
     }
@@ -35,13 +33,13 @@ public class TileButton : ButtonIF {
 
     public void writeNumber(int n) {
         _written_number = n;
-        writeButtonTextNumber(n);
+        WriteButtonTextNumber(n);
     }
 
     // set this button as the selected one in the InputReader
     public void selectButton() {
-        GameManager.Instance.GetInputReader().selectTile(_coord);
+        GameManager.Instance.GetInputReader().SelectTile(_coord);
     }
 
-    public bool isZero() { return _written_number == 0; }
+    public bool IsZero() { return _written_number == 0; }
 }

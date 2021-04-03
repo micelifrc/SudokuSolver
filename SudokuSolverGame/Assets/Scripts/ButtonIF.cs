@@ -37,22 +37,22 @@ public class ButtonIF : MonoBehaviour {
     protected virtual void AdjustPosition() { }
 
     // change the text desplayed in the button
-    public void changeButtonText(string value) {
+    public void ChangeButtonText(string value) {
         GetComponentInChildren<Text>().text = value;
     }
-    public void changeButtonText(int value) {
-        changeButtonText(value.ToString());
+    public void ChangeButtonText(int value) {
+        ChangeButtonText(value.ToString());
     }
-    public void clearText() {
+    public void ClearText() {
         GetComponentInChildren<Text>().text = "";
     }
-    public void writeButtonTextNumber(int number) {
-        if (number > 0) changeButtonText(number);
-        else clearText();
+    public void WriteButtonTextNumber(int number) {
+        if (number > 0) ChangeButtonText(number);
+        else ClearText();
     }
 
     // change the color of the text
-    public void chageTextColor(Color color) {
+    public void ChageTextColor(Color color) {
         GetComponentInChildren<Text>().color = color;
     }
 }

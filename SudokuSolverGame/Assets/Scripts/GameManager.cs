@@ -23,7 +23,6 @@ public class GameManager : MonoBehaviour {
     public Button solveButtonPrefab;  // the prefab for the Solve button
     private Button _clear_button, _solve_button;  // the actual buttons
 
-    private Solver _solver;  // the algorithm solving the Sudoku puzzle
     private int[] _input_numbers;  // record the input values (all with a -1)
     public GameObject ReaderPrefab;  // the prefab for the Reader
     private GameObject _input_reader;  // the actual reader
@@ -45,7 +44,6 @@ public class GameManager : MonoBehaviour {
         CreateInputNumberButtons();
         CreateColoredButton();
         InitializeInputNumbers();
-        InitializeSolver();
         _input_reader = Instantiate(ReaderPrefab, new Vector3(0f, 0f, 0f), Quaternion.identity);
     }
 
@@ -74,13 +72,12 @@ public class GameManager : MonoBehaviour {
         for (int tile_idx = 0; tile_idx < _GridArea; tile_idx++) {
             _tile_buttons[tile_idx] = Instantiate(tileButtonPrefab, new Vector3(0f, 0f, 0f), Quaternion.identity) as Button;
             _tile_buttons[tile_idx].transform.SetParent(GameObject.FindGameObjectWithTag("Canvas").transform, false);
-            _tile_buttons[tile_idx].GetComponent<TileButton>().Initialize(UTL.getx(tile_idx), UTL.gety(tile_idx));
+            _tile_buttons[tile_idx].GetComponent<TileButton>().Initialize(UTL.GetX(tile_idx), UTL.GetY(tile_idx));
         }
     }
 
     // create and initialize _input_number_buttons
-    private void CreateInputNumberButtons()
-    {
+    private void CreateInputNumberButtons() {
         _input_number_buttons = new Button[_GridLength + 1];
         int x = 0, y = -1;
         for (int number = 0; number <= _GridLength; number++)
@@ -102,8 +99,7 @@ public class GameManager : MonoBehaviour {
     }
 
     // create the clear and solve buttons
-    private void CreateColoredButton()
-    {
+    private void CreateColoredButton() {
         _clear_button = Instantiate(clearButtonPrefab, new Vector3(0f, 0f, 0f), Quaternion.identity) as Button;
         _clear_button.transform.SetParent(GameObject.FindGameObjectWithTag("Canvas").transform, false);
         _clear_button.GetComponent<ColoredButton>().Initialize(_GridRootLength, (_GridRootLength * 2) / 3, 2 + _GridRootLength * 2, 40);
@@ -112,18 +108,14 @@ public class GameManager : MonoBehaviour {
         _solve_button.GetComponent<ColoredButton>().Initialize(_GridRootLength, (_GridRootLength * 2) / 3, 1 + (_GridRootLength * 2) / 3, 40);
     }
 
-    // initialize the Solver
-    private void InitializeSolver() {
-        _solver = new Solver();
-        _solver.setMeasures(_GridRootLength);
-        _solver.initializeGraph();
-    }
-
     // the actual function to solve the Sudoku. Returns false if the puzzle cannot be solved
     public bool Solve() {
-        _solver.ReadInputValues(_input_numbers);
-        GetInputReader().changeTextColorForAlgo();
-        return _solver.Solve();
+        Solver solver = new Solver();
+        solver.SetMeasures(_GridRootLength);
+        solver.InitializeGraph();
+        solver.ReadInputValues(_input_numbers);
+        GetInputReader().ChangeTextColorForAlgo();
+        return solver.Solve();
     }
 
     // a list of getters
